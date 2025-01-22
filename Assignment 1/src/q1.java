@@ -1,6 +1,21 @@
 import java.awt.image.*;
 import java.io.*;
 import javax.imageio.*;
+import java.util.Random;
+
+enum Orientation {
+    UP,
+    DOWN,
+    LEFT,
+    RIGHT;
+
+    private static final Random Random = new Random();
+
+    public static Orientation getRandomOrientation() {
+        Orientation[] orientations = Orientation.values();
+        return orientations[Random.nextInt(orientations.length)];
+    }
+}
 
 public class q1 {
 
@@ -9,18 +24,15 @@ public class q1 {
     public static int n;
     public static int width=4096;
     public static int height=4096;
-    public static int radiusReductionFactor = 2;
+    private static final int RADIUS_REDUCTION_FACTOR = 2;
+    private static final int MIN_RADIUS = 200;
+    private static final int MAX_RADIUS = 500;
 
-    public static int red = 0xffff0000;
-    public static int green = 0xff00ff00;
-    public static int blue = 0xff0000ff;
 
-    enum Orientation {
-        UP,
-        DOWN,
-        LEFT,
-        RIGHT
-    }
+
+    public static final int red = 0xffff0000;
+    public static final int green = 0xff00ff00;
+    public static final int blue = 0xff0000ff;
 
     public static void main(String[] args) {
 
@@ -31,24 +43,11 @@ public class q1 {
             BufferedImage outputimage = new BufferedImage(width,height,BufferedImage.TYPE_INT_ARGB);
 
             // ------------------------------------
-            // Your code would go here
-            
-            // The easiest mechanisms for getting and setting pixels are the
-            // BufferedImage.setRGB(x,y,value) and getRGB(x,y) functions.
-            // Consult the javadocs for other methods.
+            SnowmanDrawer SD1 = new SnowmanDrawer(outputimage, red, 2);
+            SD1.start();
 
-            // The getRGB/setRGB functions return/expect the pixel value in ARGB format, one byte per channel.  For example,
-            //  int p = img.getRGB(x,y);
-            // With the 32-bit pixel value you can extract individual colour channels by shifting and masking:
-            //  int red = ((p>>16)&0xff);
-            //  int green = ((p>>8)&0xff);
-            //  int blue = (p&0xff);
-            // If you want the alpha channel value it's stored in the uppermost 8 bits of the 32-bit pixel value
-            //  int alpha = ((p>>24)&0xff);
-            // Note that an alpha of 0 is transparent, and an alpha of 0xff is fully opaque.
-
-            drawSnowman(outputimage, Orientation.DOWN, 1000, 1000, 300, red);
-            
+            SnowmanDrawer SD2 = new SnowmanDrawer(outputimage, blue, 2);
+            SD2.start();
             // ------------------------------------
             
             // Write out the image
@@ -61,90 +60,128 @@ public class q1 {
         }
     }
 
-    /**
-     * Implementation of the mid-point circle algorithm
-     * @param bufferedImage
-     * @param centerX
-     * @param centerY
-     * @param radius
-     * @param rgb
-     */
-    public static void drawCircle(BufferedImage bufferedImage, int centerX, int centerY, int radius, int rgb) {
+    static class SnowmanDrawer implements Runnable {
+        private Thread thread;
+        private final BufferedImage bufferedImage;
+        private final int color;
+        private final int numSnowman;
 
-        // Choosing top of circle for simplicity
-        int x = 0;
-        int y = -radius;
 
-        // Stop when end of octant is reached
-        while (x < -y) {
-            double midpointY = y + 0.5;
-
-            if (x*x + midpointY*midpointY > radius*radius) {
-                y += 1;
-            }
-
-            bufferedImage.setRGB(centerX + x, centerY + y, rgb);
-            bufferedImage.setRGB(centerX + x, centerY - y, rgb);
-            bufferedImage.setRGB(centerX - x, centerY + y, rgb);
-            bufferedImage.setRGB(centerX - x, centerY - y, rgb);
-            bufferedImage.setRGB(centerX + y, centerY + x, rgb);
-            bufferedImage.setRGB(centerX + y, centerY - x, rgb);
-            bufferedImage.setRGB(centerX - y, centerY + x, rgb);
-            bufferedImage.setRGB(centerX - y, centerY - x, rgb);
-
-            x++;
+        SnowmanDrawer(BufferedImage bufferedImage, int color, int numSnowman) {
+            this.bufferedImage = bufferedImage;
+            this.color = color;
+            this.numSnowman = numSnowman;
         }
-    }
 
-    public static void drawSnowman(BufferedImage bufferedImage, Orientation orientation, int centerX, int centerY, int radius, int rgb) {
-        drawCircle(bufferedImage, centerX, centerY, radius, rgb);
+        public void run() {
+            try {
+                int remainingSnowman = numSnowman;
+                while (remainingSnowman > 0) {
+                    Orientation orientation = Orientation.getRandomOrientation();
+                    int centerX = (int)(Math.random() * width);
+                    int centerY = (int)(Math.random() * height);
+                    int radius = (int)(Math.random() * (MAX_RADIUS - MIN_RADIUS) + MIN_RADIUS);
 
-        int midRadius = radius / radiusReductionFactor;
-        int topRadius = midRadius / radiusReductionFactor;
-        switch(orientation) {
-            case UP: {
-                // Draw mid-section
-                int midCenterY = centerY - radius - midRadius;
-                drawCircle(bufferedImage, centerX, midCenterY, midRadius, rgb);
-
-                // Draw top-section
-                int topCenterY = midCenterY - midRadius - topRadius;
-                drawCircle(bufferedImage, centerX, topCenterY, topRadius, rgb);
-
-                break;
+                    drawSnowman(orientation, centerX, centerY, radius, color);
+                    remainingSnowman--;
+                }
+            } catch (Exception e) {
+                System.out.println("Exception in thread " + color + ": " + e);
             }
-            case DOWN: {
-                // Draw mid-section
-                int midCenterY = centerY + radius + midRadius;
-                drawCircle(bufferedImage, centerX, midCenterY, midRadius, rgb);
+        }
 
-                // Draw top-section
-                int topCenterY = midCenterY + midRadius + topRadius;
-                drawCircle(bufferedImage, centerX, topCenterY, topRadius, rgb);
-
-                break;
+        public void start() {
+            if (thread == null) {
+                thread = new Thread(this);
+                thread.start();
             }
-            case LEFT: {
-                // Draw mid-section
-                int midCenterX = centerX - radius - midRadius;
-                drawCircle(bufferedImage, midCenterX, centerY, midRadius, rgb);
+        }
 
-                // Draw top-section
-                int topCenterX = midCenterX - midRadius - topRadius;
-                drawCircle(bufferedImage, topCenterX, centerY, topRadius, rgb);
+        /**
+         * Implementation of the mid-point circle algorithm
+         *
+         * @param centerX
+         * @param centerY
+         * @param radius
+         * @param rgb
+         */
+        private void drawCircle(int centerX, int centerY, int radius, int rgb) {
 
-                break;
+            // Choosing top of circle for simplicity
+            int x = 0;
+            int y = -radius;
+
+            // Stop when end of octant is reached
+            while (x < -y) {
+                double midpointY = y + 0.5;
+
+                if (x * x + midpointY * midpointY > radius * radius) {
+                    y += 1;
+                }
+
+                bufferedImage.setRGB(centerX + x, centerY + y, rgb);
+                bufferedImage.setRGB(centerX + x, centerY - y, rgb);
+                bufferedImage.setRGB(centerX - x, centerY + y, rgb);
+                bufferedImage.setRGB(centerX - x, centerY - y, rgb);
+                bufferedImage.setRGB(centerX + y, centerY + x, rgb);
+                bufferedImage.setRGB(centerX + y, centerY - x, rgb);
+                bufferedImage.setRGB(centerX - y, centerY + x, rgb);
+                bufferedImage.setRGB(centerX - y, centerY - x, rgb);
+
+                x++;
             }
-            case RIGHT: {
-                // Draw mid-section
-                int midCenterX = centerX + radius + midRadius;
-                drawCircle(bufferedImage, midCenterX, centerY, midRadius, rgb);
+        }
 
-                // Draw top-section
-                int topCenterX = midCenterX + midRadius + topRadius;
-                drawCircle(bufferedImage, topCenterX, centerY, topRadius, rgb);
+        private void drawSnowman(Orientation orientation, int centerX, int centerY, int radius, int rgb) {
+            this.drawCircle(centerX, centerY, radius, rgb);
 
-                break;
+            int midRadius = radius / RADIUS_REDUCTION_FACTOR;
+            int topRadius = midRadius / RADIUS_REDUCTION_FACTOR;
+            switch (orientation) {
+                case UP: {
+                    // Draw mid-section
+                    int midCenterY = centerY - radius - midRadius;
+                    this.drawCircle(centerX, midCenterY, midRadius, rgb);
+
+                    // Draw top-section
+                    int topCenterY = midCenterY - midRadius - topRadius;
+                    this.drawCircle(centerX, topCenterY, topRadius, rgb);
+
+                    break;
+                }
+                case DOWN: {
+                    // Draw mid-section
+                    int midCenterY = centerY + radius + midRadius;
+                    this.drawCircle(centerX, midCenterY, midRadius, rgb);
+
+                    // Draw top-section
+                    int topCenterY = midCenterY + midRadius + topRadius;
+                    this.drawCircle(centerX, topCenterY, topRadius, rgb);
+
+                    break;
+                }
+                case LEFT: {
+                    // Draw mid-section
+                    int midCenterX = centerX - radius - midRadius;
+                    this.drawCircle(midCenterX, centerY, midRadius, rgb);
+
+                    // Draw top-section
+                    int topCenterX = midCenterX - midRadius - topRadius;
+                    this.drawCircle(topCenterX, centerY, topRadius, rgb);
+
+                    break;
+                }
+                case RIGHT: {
+                    // Draw mid-section
+                    int midCenterX = centerX + radius + midRadius;
+                    this.drawCircle(midCenterX, centerY, midRadius, rgb);
+
+                    // Draw top-section
+                    int topCenterX = midCenterX + midRadius + topRadius;
+                    this.drawCircle(topCenterX, centerY, topRadius, rgb);
+
+                    break;
+                }
             }
         }
     }
