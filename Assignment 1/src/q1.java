@@ -82,8 +82,9 @@ public class q1 {
                     int centerY = (int)(Math.random() * height);
                     int radius = (int)(Math.random() * (MAX_RADIUS - MIN_RADIUS) + MIN_RADIUS);
 
-                    drawSnowman(orientation, centerX, centerY, radius, color);
-                    remainingSnowman--;
+                    if (drawSnowman(orientation, centerX, centerY, radius, color)) {
+                        remainingSnowman--;
+                    }
                 }
             } catch (Exception e) {
                 System.out.println("Exception in thread " + color + ": " + e);
@@ -98,8 +99,24 @@ public class q1 {
         }
 
         /**
+         * Returns true if circle is within the boundaries of the BufferedImage
+         * @param centerX
+         * @param centerY
+         * @param radius
+         * @return
+         */
+        private boolean checkCircleInBounds(int centerX, int centerY, int radius) {
+            int leftX = centerX - radius;
+            int rightX = centerX + radius;
+
+            int topY = centerY - radius;
+            int bottomY = centerY + radius;
+
+            return leftX >= 0 && rightX <= width && topY >= 0 && bottomY <= height;
+        }
+
+        /**
          * Implementation of the mid-point circle algorithm
-         *
          * @param centerX
          * @param centerY
          * @param radius
@@ -132,55 +149,73 @@ public class q1 {
             }
         }
 
-        private void drawSnowman(Orientation orientation, int centerX, int centerY, int radius, int rgb) {
-            this.drawCircle(centerX, centerY, radius, rgb);
-
+        private boolean drawSnowman(Orientation orientation, int centerX, int centerY, int radius, int rgb) {
             int midRadius = radius / RADIUS_REDUCTION_FACTOR;
             int topRadius = midRadius / RADIUS_REDUCTION_FACTOR;
+
             switch (orientation) {
                 case UP: {
-                    // Draw mid-section
                     int midCenterY = centerY - radius - midRadius;
-                    this.drawCircle(centerX, midCenterY, midRadius, rgb);
-
-                    // Draw top-section
                     int topCenterY = midCenterY - midRadius - topRadius;
+
+                    // Check if all circles are within the boundaries
+                    if (!(checkCircleInBounds(centerX, centerY, radius) && checkCircleInBounds(centerX, midCenterY, midRadius) && checkCircleInBounds(centerX, topCenterY, topRadius))) {
+                        return false;
+                    }
+
+                    this.drawCircle(centerX, centerY, radius, rgb);
+                    this.drawCircle(centerX, midCenterY, midRadius, rgb);
                     this.drawCircle(centerX, topCenterY, topRadius, rgb);
 
-                    break;
+                    return true;
                 }
                 case DOWN: {
-                    // Draw mid-section
                     int midCenterY = centerY + radius + midRadius;
-                    this.drawCircle(centerX, midCenterY, midRadius, rgb);
-
-                    // Draw top-section
                     int topCenterY = midCenterY + midRadius + topRadius;
+
+                    // Check if all circles are within the boundaries
+                    if (!(checkCircleInBounds(centerX, centerY, radius) && checkCircleInBounds(centerX, midCenterY, midRadius) && checkCircleInBounds(centerX, topCenterY, topRadius))) {
+                        return false;
+                    }
+
+                    this.drawCircle(centerX, centerY, radius, rgb);
+                    this.drawCircle(centerX, midCenterY, midRadius, rgb);
                     this.drawCircle(centerX, topCenterY, topRadius, rgb);
 
-                    break;
+                    return true;
                 }
                 case LEFT: {
-                    // Draw mid-section
                     int midCenterX = centerX - radius - midRadius;
-                    this.drawCircle(midCenterX, centerY, midRadius, rgb);
-
-                    // Draw top-section
                     int topCenterX = midCenterX - midRadius - topRadius;
+
+                    // Check if all circles are within the boundaries
+                    if (!(checkCircleInBounds(centerX, centerY, radius) && checkCircleInBounds(midCenterX, centerY, midRadius) && checkCircleInBounds(topCenterX, centerY, topRadius))) {
+                        return false;
+                    }
+
+                    this.drawCircle(centerX, centerY, radius, rgb);
+                    this.drawCircle(midCenterX, centerY, midRadius, rgb);
                     this.drawCircle(topCenterX, centerY, topRadius, rgb);
 
-                    break;
+                    return true;
                 }
                 case RIGHT: {
-                    // Draw mid-section
                     int midCenterX = centerX + radius + midRadius;
-                    this.drawCircle(midCenterX, centerY, midRadius, rgb);
-
-                    // Draw top-section
                     int topCenterX = midCenterX + midRadius + topRadius;
+
+                    // Check if all circles are within the boundaries
+                    if (!(checkCircleInBounds(centerX, centerY, radius) && checkCircleInBounds(midCenterX, centerY, midRadius) && checkCircleInBounds(topCenterX, centerY, topRadius))) {
+                        return false;
+                    }
+
+                    this.drawCircle(centerX, centerY, radius, rgb);
+                    this.drawCircle(midCenterX, centerY, midRadius, rgb);
                     this.drawCircle(topCenterX, centerY, topRadius, rgb);
 
-                    break;
+                    return true;
+                }
+                default: {
+                    return false;
                 }
             }
         }
