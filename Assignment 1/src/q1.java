@@ -88,7 +88,7 @@ public class q1 {
         private final int color;
         private final int numSnowman;
 
-        SnowmanDrawer(BufferedImage bufferedImage, int color, int numSnowman) {
+        public SnowmanDrawer(BufferedImage bufferedImage, int color, int numSnowman) {
             this.bufferedImage = bufferedImage;
             this.color = color;
             this.numSnowman = numSnowman;
