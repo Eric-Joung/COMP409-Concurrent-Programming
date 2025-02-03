@@ -1,6 +1,8 @@
 import java.awt.image.*;
 import java.io.*;
 import javax.imageio.*;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 
 enum Orientation {
@@ -16,38 +18,57 @@ enum Orientation {
         return orientations[Random.nextInt(orientations.length)];
     }
 }
-
 public class q1 {
 
     // Parameters
     public static int t;
     public static int n;
-    public static int width=4096;
-    public static int height=4096;
+    public static int width;
+    public static int height;
     private static final int RADIUS_REDUCTION_FACTOR = 2;
-    private static final int MIN_RADIUS = 200;
+    private static final int MIN_RADIUS = 8;
     private static final int MAX_RADIUS = 500;
-
-
-
     public static final int red = 0xffff0000;
     public static final int green = 0xff00ff00;
     public static final int blue = 0xff0000ff;
 
     public static void main(String[] args) {
 
+        if (args.length != 4) {
+            System.out.println("Usage: q1.java width height numThreads numSnowman");
+            return;
+        }
 
         try {
+
+            width = Integer.parseInt(args[0]);
+            height = Integer.parseInt(args[1]);
+            t = Integer.parseInt(args[2]);
+            n = Integer.parseInt(args[3]);
 
             // once we know what size we want we can creat an empty image
             BufferedImage outputimage = new BufferedImage(width,height,BufferedImage.TYPE_INT_ARGB);
 
             // ------------------------------------
-            SnowmanDrawer SD1 = new SnowmanDrawer(outputimage, red, 2);
-            SD1.start();
+            int numSnowmanToDraw = n / t;
 
-            SnowmanDrawer SD2 = new SnowmanDrawer(outputimage, blue, 2);
-            SD2.start();
+            long startTime = System.currentTimeMillis();
+
+            // Create t number of threads with n / t snowman to draw
+            SnowmanDrawer[] snowmanDrawers = new SnowmanDrawer[t];
+            for (int i = 0; i < t; i++) {
+                snowmanDrawers[i] = new SnowmanDrawer(outputimage, green, numSnowmanToDraw);
+                snowmanDrawers[i].start();
+            }
+
+            for (SnowmanDrawer snowmanDrawer : snowmanDrawers) {
+                snowmanDrawer.join();
+            }
+
+            long endTime = System.currentTimeMillis();
+            long duration = endTime - startTime;
+
+            System.out.println("Total time taken: " + duration + " ms");
             // ------------------------------------
             
             // Write out the image
@@ -61,11 +82,11 @@ public class q1 {
     }
 
     static class SnowmanDrawer implements Runnable {
+        private static List<Circle> drawnCircles = new ArrayList<>();
         private Thread thread;
         private final BufferedImage bufferedImage;
         private final int color;
         private final int numSnowman;
-
 
         SnowmanDrawer(BufferedImage bufferedImage, int color, int numSnowman) {
             this.bufferedImage = bufferedImage;
@@ -82,7 +103,7 @@ public class q1 {
                     int centerY = (int)(Math.random() * height);
                     int radius = (int)(Math.random() * (MAX_RADIUS - MIN_RADIUS) + MIN_RADIUS);
 
-                    if (drawSnowman(orientation, centerX, centerY, radius, color)) {
+                    if (isSnowmanDrawable(orientation, centerX, centerY, radius, color)) {
                         remainingSnowman--;
                     }
                 }
@@ -98,124 +119,199 @@ public class q1 {
             }
         }
 
-        /**
-         * Returns true if circle is within the boundaries of the BufferedImage
-         * @param centerX
-         * @param centerY
-         * @param radius
-         * @return
-         */
-        private boolean checkCircleInBounds(int centerX, int centerY, int radius) {
-            int leftX = centerX - radius;
-            int rightX = centerX + radius;
-
-            int topY = centerY - radius;
-            int bottomY = centerY + radius;
-
-            return leftX >= 0 && rightX <= width && topY >= 0 && bottomY <= height;
+        public void join() throws InterruptedException {
+            thread.join();
         }
 
-        /**
-         * Implementation of the mid-point circle algorithm
-         * @param centerX
-         * @param centerY
-         * @param radius
-         * @param rgb
-         */
-        private void drawCircle(int centerX, int centerY, int radius, int rgb) {
-
-            // Choosing top of circle for simplicity
-            int x = 0;
-            int y = -radius;
-
-            // Stop when end of octant is reached
-            while (x < -y) {
-                double midpointY = y + 0.5;
-
-                if (x * x + midpointY * midpointY > radius * radius) {
-                    y += 1;
+        private synchronized boolean lockSnowman(List<Circle> snowman) {
+            synchronized (drawnCircles) {
+                for (Circle circle : snowman) {
+                    if (circle.isCircleOverlapping()) {
+                        return false;
+                    }
                 }
 
-                bufferedImage.setRGB(centerX + x, centerY + y, rgb);
-                bufferedImage.setRGB(centerX + x, centerY - y, rgb);
-                bufferedImage.setRGB(centerX - x, centerY + y, rgb);
-                bufferedImage.setRGB(centerX - x, centerY - y, rgb);
-                bufferedImage.setRGB(centerX + y, centerY + x, rgb);
-                bufferedImage.setRGB(centerX + y, centerY - x, rgb);
-                bufferedImage.setRGB(centerX - y, centerY + x, rgb);
-                bufferedImage.setRGB(centerX - y, centerY - x, rgb);
-
-                x++;
+                drawnCircles.addAll(snowman);
+                return true;
             }
         }
 
-        private boolean drawSnowman(Orientation orientation, int centerX, int centerY, int radius, int rgb) {
+        private boolean isSnowmanInBounds(List<Circle> snowman) {
+            for (Circle circle : snowman) {
+                if (!circle.isCircleInBounds()) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+
+        private boolean isSnowmanDrawable(Orientation orientation, int centerX, int centerY, int radius, int rgb) {
             int midRadius = radius / RADIUS_REDUCTION_FACTOR;
             int topRadius = midRadius / RADIUS_REDUCTION_FACTOR;
 
+            int midCenterX, midCenterY, topCenterX, topCenterY;
+
             switch (orientation) {
                 case UP: {
-                    int midCenterY = centerY - radius - midRadius;
-                    int topCenterY = midCenterY - midRadius - topRadius;
+                    // Unchanged x values
+                    midCenterX = centerX;
+                    topCenterX = centerX;
+                    // New y values
+                    midCenterY = centerY - radius - midRadius;
+                    topCenterY = midCenterY - midRadius - topRadius;
 
-                    // Check if all circles are within the boundaries
-                    if (!(checkCircleInBounds(centerX, centerY, radius) && checkCircleInBounds(centerX, midCenterY, midRadius) && checkCircleInBounds(centerX, topCenterY, topRadius))) {
-                        return false;
-                    }
-
-                    this.drawCircle(centerX, centerY, radius, rgb);
-                    this.drawCircle(centerX, midCenterY, midRadius, rgb);
-                    this.drawCircle(centerX, topCenterY, topRadius, rgb);
-
-                    return true;
+                    break;
                 }
                 case DOWN: {
-                    int midCenterY = centerY + radius + midRadius;
-                    int topCenterY = midCenterY + midRadius + topRadius;
+                    // Unchanged x values
+                    midCenterX = centerX;
+                    topCenterX = centerX;
+                    // New y values
+                    midCenterY = centerY + radius + midRadius;
+                    topCenterY = midCenterY + midRadius + topRadius;
 
-                    // Check if all circles are within the boundaries
-                    if (!(checkCircleInBounds(centerX, centerY, radius) && checkCircleInBounds(centerX, midCenterY, midRadius) && checkCircleInBounds(centerX, topCenterY, topRadius))) {
-                        return false;
-                    }
-
-                    this.drawCircle(centerX, centerY, radius, rgb);
-                    this.drawCircle(centerX, midCenterY, midRadius, rgb);
-                    this.drawCircle(centerX, topCenterY, topRadius, rgb);
-
-                    return true;
+                    break;
                 }
                 case LEFT: {
-                    int midCenterX = centerX - radius - midRadius;
-                    int topCenterX = midCenterX - midRadius - topRadius;
+                    // Unchanged y values
+                    midCenterY = centerY;
+                    topCenterY = centerY;
+                    // New x values
+                    midCenterX = centerX - radius - midRadius;
+                    topCenterX = midCenterX - midRadius - topRadius;
 
-                    // Check if all circles are within the boundaries
-                    if (!(checkCircleInBounds(centerX, centerY, radius) && checkCircleInBounds(midCenterX, centerY, midRadius) && checkCircleInBounds(topCenterX, centerY, topRadius))) {
-                        return false;
-                    }
-
-                    this.drawCircle(centerX, centerY, radius, rgb);
-                    this.drawCircle(midCenterX, centerY, midRadius, rgb);
-                    this.drawCircle(topCenterX, centerY, topRadius, rgb);
-
-                    return true;
+                    break;
                 }
                 case RIGHT: {
-                    int midCenterX = centerX + radius + midRadius;
-                    int topCenterX = midCenterX + midRadius + topRadius;
+                    // Unchanged y values
+                    midCenterY = centerY;
+                    topCenterY = centerY;
+                    // New x values
+                    midCenterX = centerX + radius + midRadius;
+                    topCenterX = midCenterX + midRadius + topRadius;
 
-                    // Check if all circles are within the boundaries
-                    if (!(checkCircleInBounds(centerX, centerY, radius) && checkCircleInBounds(midCenterX, centerY, midRadius) && checkCircleInBounds(topCenterX, centerY, topRadius))) {
-                        return false;
-                    }
-
-                    this.drawCircle(centerX, centerY, radius, rgb);
-                    this.drawCircle(midCenterX, centerY, midRadius, rgb);
-                    this.drawCircle(topCenterX, centerY, topRadius, rgb);
-
-                    return true;
+                    break;
                 }
                 default: {
                     return false;
+                }
+            }
+
+            List<Circle> snowman = new ArrayList<>();
+
+            Circle bottom = new Circle(centerX, centerY, radius);
+            Circle middle = new Circle(midCenterX, midCenterY, midRadius);
+            Circle top = new Circle(topCenterX, topCenterY, topRadius);
+
+            snowman.add(bottom);
+            snowman.add(middle);
+            snowman.add(top);
+
+            // Check if snowman is within the boundaries
+            if (!isSnowmanInBounds(snowman)) {
+                return false;
+            }
+
+            // Attempt locking of circles
+            if (!lockSnowman(snowman)) {
+                return false;
+            }
+
+            bottom.drawCircle(rgb);
+            middle.drawCircle(rgb);
+            top.drawCircle(rgb);
+
+            return true;
+        }
+
+        private class Circle {
+            public int centerX;
+            public int centerY;
+            public int radius;
+
+            public Circle(int centerX, int centerY, int radius) {
+                this.centerX = centerX;
+                this.centerY = centerY;
+                this.radius = radius;
+            }
+
+            /**
+             * Returns true if circle is within the boundaries of the BufferedImage
+             * @return true if circle is within boundaries of the BufferedImage
+             */
+            private boolean isCircleInBounds() {
+                int leftX = this.centerX - this.radius - 10;
+                int rightX = this.centerX + this.radius + 10;
+
+                int topY = this.centerY - this.radius - 10;
+                int bottomY = this.centerY + this.radius + 10;
+
+                return leftX > 0 && rightX <= width && topY > 0 && bottomY <= height;
+            }
+
+            /**
+             * Returns true if the circle is successfully checked out. Returns false if the circle is already checked out.
+             * @return true if circle is overlapping with existing circle, false otherwise.
+             */
+            private boolean isCircleOverlapping() {
+                for (Circle drawnCircle : drawnCircles) {
+                    if (Circle.areCirclesTouching(this, drawnCircle)) {
+                        return true;
+                    }
+                }
+
+                return false;
+            }
+
+            public static boolean areCirclesTouching(Circle circle1, Circle circle2) {
+                int x1Max = circle1.centerX + circle1.radius;
+                int y1Max = circle1.centerY + circle1.radius;
+                int x1Min = circle1.centerX - circle1.radius;
+                int y1Min = circle1.centerY - circle1.radius;
+
+
+                int x2Max = circle2.centerX + circle2.radius;
+                int y2Max = circle2.centerY + circle2.radius;
+                int x2Min = circle2.centerX - circle2.radius;
+                int y2Min = circle2.centerY - circle2.radius;
+
+                if (x1Max < x2Min || x2Max < x1Min || y1Max < y2Min || y2Max < y1Min) {
+                    return false;
+                }
+
+                return true;
+            }
+
+            /**
+             * Implementation of the mid-point circle algorithm
+             * @param rgb
+             */
+            private void drawCircle(int rgb) {
+
+                // Choosing top of circle for simplicity
+                int x = 0;
+                int y = -this.radius;
+
+                // Stop when end of octant is reached
+                while (x < -y) {
+                    double midpointY = y + 0.5;
+
+                    if (x * x + midpointY * midpointY > this.radius * this.radius) {
+                        y += 1;
+                    }
+
+                    bufferedImage.setRGB(this.centerX + x, this.centerY + y, rgb);
+                    bufferedImage.setRGB(this.centerX + x, this.centerY - y, rgb);
+                    bufferedImage.setRGB(this.centerX - x, this.centerY + y, rgb);
+                    bufferedImage.setRGB(this.centerX - x, this.centerY - y, rgb);
+                    bufferedImage.setRGB(this.centerX + y, this.centerY + x, rgb);
+                    bufferedImage.setRGB(this.centerX + y, this.centerY - x, rgb);
+                    bufferedImage.setRGB(this.centerX - y, this.centerY + x, rgb);
+                    bufferedImage.setRGB(this.centerX - y, this.centerY - x, rgb);
+
+                    x++;
                 }
             }
         }
