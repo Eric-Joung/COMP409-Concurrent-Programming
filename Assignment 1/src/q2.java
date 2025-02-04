@@ -1,5 +1,8 @@
+import java.io.FileWriter;
+import java.io.IOException;
 import java.sql.Array;
 import java.util.*;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import static java.lang.Thread.sleep;
 
@@ -21,19 +24,15 @@ public class q2 {
     private static int k;
     private static int j;
     private static int s;
-
     private static final int initialSnakes = 10;
     private static final int initialLadders = 9;
     private static Cell[][] gameGrid;
-    private static List<Integer> portals = new ArrayList<>();
+    private static final List<Integer> portals = new ArrayList<>();
     private static final Object lock = new Object();
-
     private static final Random rand = new Random();
-
     private static long startTime;
-    private static long runTime;
-
     private static volatile boolean running = true;
+    private static final Queue<String> logQueue = new ConcurrentLinkedQueue<>();
 
     public static void main(String[] args) {
 
@@ -46,6 +45,9 @@ public class q2 {
         j = Integer.parseInt(args[1]);
         s = Integer.parseInt(args[2]) * 1000;
 
+        startTime = System.currentTimeMillis();
+
+        // Initialize board
         gameGrid = new Cell[10][10];
         int currentPosition = 0;
         for (int i = 0; i < 10; i++) {
@@ -56,27 +58,18 @@ public class q2 {
             }
         }
 
-        // Draw the grid
-        for (Cell[] rows : gameGrid) {
-            for (Cell cell : rows) {
-                System.out.print("[" + cell.position + "]");
-            }
-            System.out.println("");
-        }
-
         // Instantiate Snakes
         for (int i = 0; i < initialSnakes; i++) {
-            Cell.generatePortal(Portal.SNAKE);
+            generatePortal(Portal.SNAKE);
         }
 
         // Instantiate Ladders
         for (int i = 0; i < initialLadders; i++) {
-            Cell.generatePortal(Portal.LADDER);
+            generatePortal(Portal.LADDER);
         }
 
         try {
-            startTime = System.currentTimeMillis();
-
+            // Initialize Player, Adder, and Remover threads
             Player player = new Player();
             player.start();
 
@@ -86,26 +79,79 @@ public class q2 {
             PortalRemover portalRemover = new PortalRemover();
             portalRemover.start();
 
-            runTime = System.currentTimeMillis();
+            long runTime = System.currentTimeMillis();
 
+            // Loop over time and only stop once time exceeds parameter s
             while (runTime - startTime < s) {
                 runTime = System.currentTimeMillis();
             }
 
+            // Stop and join all threads
             running = false;
-
             player.join();
             portalAdder.join();
             portalRemover.join();
 
-            System.out.println("Program has ended after " + ((runTime - startTime) / 1000) + " seconds");
-            System.out.println(portals);
+            logQueue.add("Program has ended after " + ((runTime - startTime) / 1000) + " seconds");
+
+            writeLogsToFile("Assignment 1/output.txt");
         } catch (Exception e) {
             System.out.println("ERROR " +e);
             e.printStackTrace();
         }
     }
 
+    /**
+     * Single threaded implementation of portal generation
+     * @param portal - Portal enum
+     */
+    private static void generatePortal(Portal portal) {
+        int headPosition;
+        int tailPosition;
+
+        switch (portal) {
+            case SNAKE:
+                do {
+                    headPosition = rand.nextInt(98 - 10 + 1) + 10;
+                    tailPosition = rand.nextInt((headPosition / 10 * 10 - 1) - 1 + 1) + 1;
+
+                } while (gameGrid[headPosition / 10][headPosition % 10].portal != null);
+                break;
+            case LADDER:
+                do {
+                    tailPosition = rand.nextInt(98 - 10 + 1) + 10;
+                    headPosition = rand.nextInt((tailPosition / 10 * 10 - 1) - 1 + 1) + 1;
+
+                } while (gameGrid[headPosition / 10][headPosition % 10].portal != null);
+                break;
+            default:
+                return;
+        }
+
+        // Make the found cell point to portal tail
+        gameGrid[headPosition / 10][headPosition % 10].portal = gameGrid[tailPosition / 10][tailPosition % 10];
+        portals.add(headPosition);
+    }
+
+    /**
+     * Write contents of ConcurrentLogQueue to filename
+     * @param filename - The name of the file to write to
+     */
+    private static void writeLogsToFile(String filename) {
+        try (FileWriter writer = new FileWriter(filename)) {
+            for (String log : logQueue) {
+                writer.write(log + "\n");
+            }
+            writer.close();
+            System.out.println("Log file written at " + filename);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * Player class encapsulates player thread
+     */
     static class Player implements Runnable {
 
         private Thread thread;
@@ -125,16 +171,16 @@ public class q2 {
                     synchronized (lock) {
                         finish = rollDice();
                         long endTime = System.currentTimeMillis();
-                        System.out.println(endTime - startTime + " Player " + currentCell.position);
+                        logQueue.add(endTime - startTime + " Player " + currentCell.position);
                         // if new position is portal head, move to portal tail
                         if (currentCell.portal != null) {
                             int oldCellPosition = currentCell.position;
                             moveToPortalTail();
-                            System.out.println((endTime - startTime) + " Player " + oldCellPosition + " " + currentCell.position);
+                            logQueue.add((endTime - startTime) + " Player " + oldCellPosition + " " + currentCell.position);
                         }
                     }
                     if (finish == 1) {
-                        System.out.println("Player won! Restarting...");
+                        logQueue.add("Player won! Restarting...");
                         sleep(1000);
                     } else {
                         sleep(rand.nextInt(50 - 20 + 1) + 20);
@@ -156,6 +202,11 @@ public class q2 {
             thread.join();
         }
 
+        /**
+         * Stimulates dice roll and player movement given dice roll
+         * @return 1 - Player reached finish line 0 - Player did not reach finish line
+         * @throws InterruptedException
+         */
         private int rollDice() throws InterruptedException {
             int numSteps = rand.nextInt(maxRoll - minRoll + 1) + minRoll;
             int newPosition = numSteps + currentCell.position;
@@ -167,12 +218,18 @@ public class q2 {
             return 0;
         }
 
+        /**
+         * Moves player to the tail of the portal
+         */
         private void moveToPortalTail() {
             int newPosition = currentCell.portal.position;
             currentCell = gameGrid[newPosition / 10][newPosition % 10];
         }
     }
 
+    /**
+     * PortalAdder class encapsulates portalAdder thread
+     */
     static class PortalAdder implements Runnable {
         private Thread thread;
         private Integer portalHead;
@@ -181,7 +238,7 @@ public class q2 {
             try {
                 while (running) {
                     Portal portal = Portal.getRandomPortal();
-                    Cell.generatePortal(portal);
+                    generatePortal(portal);
                     sleep(k);
                 }
             } catch (InterruptedException e) {
@@ -199,42 +256,11 @@ public class q2 {
         public void join() throws InterruptedException {
             thread.join();
         }
-    }
 
-    static class PortalRemover implements Runnable {
-        private Thread thread;
-        public void run() {
-            try {
-                while (running) {
-                    Cell.removePortal();
-                    sleep(j);
-                }
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-
-        public void start() {
-            if (thread == null) {
-                thread = new Thread(this);
-                thread.start();
-            }
-        }
-
-        public void join() throws InterruptedException {
-            thread.join();
-        }
-    }
-
-    static class Cell {
-        public Cell portal;
-        public int position;
-
-        public Cell(Cell portal, int position) {
-            this.portal = portal;
-            this.position = position;
-        }
-
+        /**
+         * Generates either a Ladder or a Snake
+         * @param portal - Portal enum
+         */
         private static void generatePortal(Portal portal) {
             int headPosition;
             int tailPosition;
@@ -258,18 +284,50 @@ public class q2 {
                     return;
             }
 
+            // Make the found cell point to portal tail
             synchronized (lock) {
                 gameGrid[headPosition / 10][headPosition % 10].portal = gameGrid[tailPosition / 10][tailPosition % 10];
                 portals.add(headPosition);
                 long endTime = System.currentTimeMillis();
                 if (portal == Portal.SNAKE) {
-                    System.out.println((endTime - startTime) + " Adder snake " + tailPosition + " " + headPosition);
+                    logQueue.add((endTime - startTime) + " Adder snake " + tailPosition + " " + headPosition);
                 } else {
-                    System.out.println((endTime - startTime) + " Adder ladder " + headPosition + " " + tailPosition);
+                    logQueue.add((endTime - startTime) + " Adder ladder " + headPosition + " " + tailPosition);
                 }
             }
         }
+    }
 
+    /**
+     * PortalRemover class encapsulates portalRemover thread
+     */
+    static class PortalRemover implements Runnable {
+        private Thread thread;
+        public void run() {
+            try {
+                while (running) {
+                    removePortal();
+                    sleep(j);
+                }
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        public void start() {
+            if (thread == null) {
+                thread = new Thread(this);
+                thread.start();
+            }
+        }
+
+        public void join() throws InterruptedException {
+            thread.join();
+        }
+
+        /**
+         * Removes portal
+         */
         private static void removePortal() {
             synchronized (lock) {
                 int randomPortalIndex = rand.nextInt(portals.size());
@@ -292,12 +350,29 @@ public class q2 {
                 portals.remove(randomPortalIndex);
                 long endTime = System.currentTimeMillis();
                 if (portal == Portal.SNAKE) {
-                    System.out.println((endTime - startTime) + " Remover snake " + tailPosition + " " + headPosition);
+                    logQueue.add((endTime - startTime) + " Remover snake " + tailPosition + " " + headPosition);
                 } else {
-                    System.out.println((endTime - startTime) + " Remover ladder " + headPosition + " " + tailPosition);
+                    logQueue.add((endTime - startTime) + " Remover ladder " + headPosition + " " + tailPosition);
                 }
             }
         }
+    }
+
+    /**
+     * Cell class encapsulates individual grid sections of the game board
+     */
+    static class Cell {
+        public Cell portal;
+        public int position;
+
+        public Cell(Cell portal, int position) {
+            this.portal = portal;
+            this.position = position;
+        }
+
+
+
+
     }
 }
 
