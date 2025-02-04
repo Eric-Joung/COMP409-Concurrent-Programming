@@ -369,10 +369,6 @@ public class q2 {
             this.portal = portal;
             this.position = position;
         }
-
-
-
-
     }
 }
 
