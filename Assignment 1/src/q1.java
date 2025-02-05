@@ -52,9 +52,8 @@ public class q1 {
             // ------------------------------------
             int numSnowmanToDraw = n / t;
 
-            long startTime = System.currentTimeMillis();
-
             // Create t number of threads with n / t snowman to draw
+            long startTime = System.currentTimeMillis();
             SnowmanDrawer[] snowmanDrawers = new SnowmanDrawer[t];
             for (int i = 0; i < t; i++) {
                 snowmanDrawers[i] = new SnowmanDrawer(outputimage, green, numSnowmanToDraw);
@@ -65,16 +64,16 @@ public class q1 {
                 snowmanDrawer.join();
             }
 
+            // Once all threads have finished, measure program runtime
             long endTime = System.currentTimeMillis();
             long duration = endTime - startTime;
 
-            System.out.println("Total time taken: " + duration + " ms");
+            System.out.println("Total time taken to draw " + n + " snowmen with " + t + " threads: " + duration + " ms");
             // ------------------------------------
             
             // Write out the image
             File outputfile = new File("Assignment 1/outputimage.png");
             ImageIO.write(outputimage, "png", outputfile);
-
         } catch (Exception e) {
             System.out.println("ERROR " +e);
             e.printStackTrace();
@@ -82,7 +81,7 @@ public class q1 {
     }
 
     static class SnowmanDrawer implements Runnable {
-        private static List<Circle> drawnCircles = new ArrayList<>();
+        private static final List<SnowmanBox> drawnSnowman = new ArrayList<>();
         private Thread thread;
         private final BufferedImage bufferedImage;
         private final int color;
@@ -123,29 +122,22 @@ public class q1 {
             thread.join();
         }
 
-        private synchronized boolean lockSnowman(List<Circle> snowman) {
-            synchronized (drawnCircles) {
-                for (Circle circle : snowman) {
-                    if (circle.isCircleOverlapping()) {
+        private boolean lockSnowman(SnowmanBox snowmanBox ) {
+            // Check if snowman is inbounds
+            if (!snowmanBox.isSnowmanBoxInbounds()) {
+                return false;
+            }
+
+            synchronized (drawnSnowman) {
+                for (SnowmanBox drawnSnowman : drawnSnowman) {
+                    if (SnowmanBox.areBoxesTouching(snowmanBox, drawnSnowman)) {
                         return false;
                     }
                 }
-
-                drawnCircles.addAll(snowman);
-                return true;
+                drawnSnowman.add(snowmanBox);
             }
-        }
-
-        private boolean isSnowmanInBounds(List<Circle> snowman) {
-            for (Circle circle : snowman) {
-                if (!circle.isCircleInBounds()) {
-                    return false;
-                }
-            }
-
             return true;
         }
-
 
         private boolean isSnowmanDrawable(Orientation orientation, int centerX, int centerY, int radius, int rgb) {
             int midRadius = radius / RADIUS_REDUCTION_FACTOR;
@@ -199,25 +191,16 @@ public class q1 {
                 }
             }
 
-            List<Circle> snowman = new ArrayList<>();
+            SnowmanBox snowmanBox = new SnowmanBox(centerX, centerY, orientation, radius);
+
+            // Attempt locking of circles
+            if (!lockSnowman(snowmanBox)) {
+                return false;
+            }
 
             Circle bottom = new Circle(centerX, centerY, radius);
             Circle middle = new Circle(midCenterX, midCenterY, midRadius);
             Circle top = new Circle(topCenterX, topCenterY, topRadius);
-
-            snowman.add(bottom);
-            snowman.add(middle);
-            snowman.add(top);
-
-            // Check if snowman is within the boundaries
-            if (!isSnowmanInBounds(snowman)) {
-                return false;
-            }
-
-            // Attempt locking of circles
-            if (!lockSnowman(snowman)) {
-                return false;
-            }
 
             bottom.drawCircle(rgb);
             middle.drawCircle(rgb);
@@ -235,53 +218,6 @@ public class q1 {
                 this.centerX = centerX;
                 this.centerY = centerY;
                 this.radius = radius;
-            }
-
-            /**
-             * Returns true if circle is within the boundaries of the BufferedImage
-             * @return true if circle is within boundaries of the BufferedImage
-             */
-            private boolean isCircleInBounds() {
-                int leftX = this.centerX - this.radius - 10;
-                int rightX = this.centerX + this.radius + 10;
-
-                int topY = this.centerY - this.radius - 10;
-                int bottomY = this.centerY + this.radius + 10;
-
-                return leftX > 0 && rightX <= width && topY > 0 && bottomY <= height;
-            }
-
-            /**
-             * Returns true if the circle is successfully checked out. Returns false if the circle is already checked out.
-             * @return true if circle is overlapping with existing circle, false otherwise.
-             */
-            private boolean isCircleOverlapping() {
-                for (Circle drawnCircle : drawnCircles) {
-                    if (Circle.areCirclesTouching(this, drawnCircle)) {
-                        return true;
-                    }
-                }
-
-                return false;
-            }
-
-            public static boolean areCirclesTouching(Circle circle1, Circle circle2) {
-                int x1Max = circle1.centerX + circle1.radius;
-                int y1Max = circle1.centerY + circle1.radius;
-                int x1Min = circle1.centerX - circle1.radius;
-                int y1Min = circle1.centerY - circle1.radius;
-
-
-                int x2Max = circle2.centerX + circle2.radius;
-                int y2Max = circle2.centerY + circle2.radius;
-                int x2Min = circle2.centerX - circle2.radius;
-                int y2Min = circle2.centerY - circle2.radius;
-
-                if (x1Max < x2Min || x2Max < x1Min || y1Max < y2Min || y2Max < y1Min) {
-                    return false;
-                }
-
-                return true;
             }
 
             /**
@@ -313,6 +249,69 @@ public class q1 {
 
                     x++;
                 }
+            }
+        }
+
+        private static class SnowmanBox {
+            private int minX;
+            private int maxX;
+            private int minY;
+            private int maxY;
+
+            public SnowmanBox(int minX, int maxX, int minY, int maxY) {
+                this.minX = minX;
+                this.maxX = maxX;
+                this.minY = minY;
+                this.maxY = maxY;
+            }
+
+            public SnowmanBox(int centerX, int centerY, Orientation orientation, int radius) {
+                switch (orientation) {
+                    case UP:
+                        this.minX = centerX - radius;
+                        this.maxX = centerX + radius;
+
+                        this.maxY = centerY + radius;
+                        this.minY = centerY - radius - 2 * (radius/RADIUS_REDUCTION_FACTOR) - 2 * (radius/(2*RADIUS_REDUCTION_FACTOR));
+                        break;
+                    case DOWN:
+                        this.minX = centerX - radius;
+                        this.maxX = centerX + radius;
+
+                        this.minY = centerY - radius;
+                        this.maxY = centerY + radius + 2 * (radius/RADIUS_REDUCTION_FACTOR) + 2 * (radius/(2*RADIUS_REDUCTION_FACTOR));
+                        break;
+                    case LEFT:
+                        this.minY = centerY - radius;
+                        this.maxY = centerY + radius;
+
+                        this.maxX = centerX + radius;
+                        this.minX = centerX - radius - 2 * (radius/RADIUS_REDUCTION_FACTOR) - 2 * (radius/(2*RADIUS_REDUCTION_FACTOR));
+                        break;
+                    case RIGHT:
+                        this.minY = centerY - radius;
+                        this.maxY = centerY + radius;
+
+                        this.minX = centerX - radius;
+                        this.maxX = centerX + radius + 2 * (radius/RADIUS_REDUCTION_FACTOR) + 2 * (radius/(2*RADIUS_REDUCTION_FACTOR));
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            public static boolean areBoxesTouching(SnowmanBox snowmanBox1, SnowmanBox snowmanBox2) {
+                if (snowmanBox1.maxX < snowmanBox2.minX || snowmanBox2.maxX < snowmanBox1.minX || snowmanBox1.maxY < snowmanBox2.minY || snowmanBox2.maxY < snowmanBox1.minY) {
+                    return false;
+                }
+                return true;
+            }
+
+            public boolean isSnowmanBoxInbounds() {
+                if (minX < 10 || maxX > width - 10 || minY < 10 || maxY > height - 10) {
+                    return false;
+                }
+                return true;
             }
         }
     }
