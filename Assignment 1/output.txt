@@ -1,0 +1,208 @@
+8 Player 4
+27 Remover ladder 29 39
+42 Adder snake 60 82
+50 Player 10
+98 Player 16
+146 Player 19
+146 Player 19 56
+189 Player 60
+219 Player 61
+249 Player 66
+288 Player 69
+288 Player 69 81
+332 Player 84
+387 Player 86
+436 Player 88
+479 Player 94
+514 Player 99
+543 Remover ladder 65 95
+543 Adder ladder 40 67
+551 Player 0
+Player won! Restarting...
+1044 Remover snake 3 28
+1044 Adder ladder 54 68
+1545 Remover ladder 31 83
+1545 Adder ladder 8 24
+1560 Player 4
+1600 Player 10
+1638 Player 12
+1685 Player 16
+1710 Player 20
+1710 Player 20 8
+1742 Player 10
+1777 Player 11
+1820 Player 14
+1861 Player 17
+1861 Player 17 22
+1908 Player 26
+1908 Player 26 18
+1934 Player 20
+1934 Player 20 8
+1978 Player 9
+2022 Player 11
+2055 Remover ladder 40 67
+2055 Adder ladder 14 68
+2067 Player 15
+2110 Player 18
+2139 Player 24
+2170 Player 25
+2197 Player 27
+2238 Player 29
+2281 Player 33
+2304 Player 34
+2346 Player 40
+2391 Player 46
+2434 Player 52
+2467 Player 58
+2511 Player 59
+2537 Player 62
+2556 Remover snake 60 82
+2556 Adder ladder 9 29
+2586 Player 63
+2586 Player 63 36
+2624 Player 41
+2654 Player 42
+2697 Player 43
+2742 Player 47
+2742 Player 47 15
+2770 Player 19
+2770 Player 19 56
+2817 Player 61
+2863 Player 62
+2897 Player 67
+2944 Player 70
+2973 Player 73
+2973 Player 73 96
+3011 Player 0
+Player won! Restarting...
+3056 Remover snake 8 20
+3056 Adder snake 27 64
+3564 Remover ladder 9 29
+3564 Adder ladder 35 86
+4026 Player 5
+4058 Player 9
+4071 Remover ladder 35 86
+4071 Adder snake 24 43
+4106 Player 15
+4148 Player 20
+4173 Player 23
+4196 Player 28
+4235 Player 29
+4257 Player 30
+4257 Player 30 29
+4286 Player 30
+4286 Player 30 29
+4319 Player 33
+4377 Player 39
+4426 Player 44
+4475 Player 50
+4524 Player 53
+4524 Player 53 33
+4553 Player 39
+4571 Adder ladder 86 97
+4571 Remover snake 27 64
+4588 Player 41
+4636 Player 45
+4664 Player 48
+4664 Player 48 37
+4690 Player 41
+4723 Player 43
+4723 Player 43 24
+4755 Player 25
+4779 Player 29
+4818 Player 30
+4818 Player 30 29
+4853 Player 34
+4883 Player 39
+4917 Player 41
+4962 Player 46
+5009 Player 52
+5040 Player 54
+5040 Player 54 68
+5072 Remover ladder 69 81
+5072 Adder ladder 12 55
+5084 Player 69
+5119 Player 74
+5141 Player 75
+5165 Player 77
+5205 Player 78
+5240 Player 81
+5285 Player 87
+5332 Player 91
+5356 Player 96
+5402 Player 99
+5437 Player 0
+Player won! Restarting...
+5573 Adder ladder 59 96
+5573 Remover snake 26 36
+6073 Adder ladder 62 78
+6086 Remover snake 15 47
+6443 Player 2
+6469 Player 8
+6469 Player 8 24
+6509 Player 27
+6545 Player 28
+6566 Player 30
+6566 Player 30 29
+6581 Adder snake 55 88
+6590 Player 34
+6597 Remover snake 45 80
+6620 Player 37
+6651 Player 42
+6682 Player 44
+6716 Player 46
+6750 Player 47
+6775 Player 51
+6814 Player 55
+6864 Player 56
+6897 Player 57
+6934 Player 58
+6972 Player 59
+6972 Player 59 96
+7028 Player 97
+7082 Adder ladder 6 28
+7090 Player 99
+7097 Remover ladder 54 68
+7129 Player 0
+Player won! Restarting...
+7596 Adder snake 12 49
+7597 Remover snake 37 48
+8106 Remover ladder 6 28
+8106 Adder ladder 27 79
+8137 Player 2
+8176 Player 7
+8176 Player 7 12
+8198 Player 16
+8220 Player 20
+8257 Player 26
+8257 Player 26 18
+8304 Player 22
+8336 Player 27
+8336 Player 27 79
+8373 Player 80
+8414 Player 81
+8460 Player 83
+8506 Player 87
+8531 Player 91
+8575 Player 92
+8611 Player 97
+8614 Remover snake 12 49
+8614 Adder snake 49 75
+8639 Player 0
+Player won! Restarting...
+9115 Remover snake 55 88
+9115 Adder ladder 36 66
+9621 Remover ladder 17 22
+9621 Adder ladder 31 62
+9652 Player 3
+9691 Player 7
+9691 Player 7 12
+9740 Player 15
+9784 Player 20
+9832 Player 21
+9882 Player 22
+9925 Player 27
+9925 Player 27 79
+9970 Player 84
+9995 Player 88
+Program has ended after 10 seconds
