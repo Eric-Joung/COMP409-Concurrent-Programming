@@ -1,0 +1,144 @@
+Sample output with k = 9, q = 10: 
+TA 0 comes up with a question
+TA 2 comes up with a question
+TA 7 comes up with a question
+TA 8 comes up with a question
+P wakes
+A group of TAs starts to be seen by P
+A group of TAs questions have been answered
+P goes to sleep
+TA 3 comes up with a question
+TA 3 comes up with a question
+P wakes
+A group of TAs starts to be seen by P
+A group of TAs questions have been answered
+P goes to sleep
+TA 1 comes up with a question
+TA 0 comes up with a question
+Grad student 4 arrived
+TA 6 comes up with a question
+TA 1 comes up with a question
+TA 7 comes up with a question
+P wakes
+A group of TAs starts to be seen by P
+A group of TAs questions have been answered
+P goes to sleep
+TA 7 comes up with a question
+P wakes
+A group of TAs starts to be seen by P
+A group of TAs questions have been answered
+P goes to sleep
+TA 7 comes up with a question
+TA 1 comes up with a question
+TA 8 comes up with a question
+TA 7 comes up with a question
+P wakes
+A group of TAs starts to be seen by P
+A group of TAs questions have been answered
+P goes to sleep
+TA 1 comes up with a question
+TA 0 comes up with a question
+P wakes
+A group of TAs starts to be seen by P
+A group of TAs questions have been answered
+P goes to sleep
+Grad student 0 arrived
+TA 6 comes up with a question
+TA 0 comes up with a question
+TA 3 comes up with a question
+P wakes
+A group of TAs starts to be seen by P
+A group of TAs questions have been answered
+P goes to sleep
+TA 2 comes up with a question
+TA 6 comes up with a question
+TA 5 comes up with a question
+P wakes
+A group of TAs starts to be seen by P
+A group of TAs questions have been answered
+P goes to sleep
+TA 1 comes up with a question
+Grad student 3 arrived
+TA 1 comes up with a question
+TA 4 comes up with a question
+TA 2 comes up with a question
+TA 7 comes up with a question
+TA 6 comes up with a question
+P wakes
+A group of TAs starts to be seen by P
+A group of TAs questions have been answered
+P goes to sleep
+TA 6 comes up with a question
+TA 7 comes up with a question
+TA 3 comes up with a question
+TA 4 comes up with a question
+P wakes
+A group of TAs starts to be seen by P
+A group of TAs questions have been answered
+P goes to sleep
+TA 8 comes up with a question
+P wakes
+A group of TAs starts to be seen by P
+A group of TAs questions have been answered
+P goes to sleep
+TA 4 comes up with a question
+TA 3 comes up with a question
+TA 7 comes up with a question
+P wakes
+A group of TAs starts to be seen by P
+A group of TAs questions have been answered
+P goes to sleep
+TA 6 comes up with a question
+P wakes
+A group of TAs starts to be seen by P
+A group of TAs questions have been answered
+P goes to sleep
+TA 6 comes up with a question
+TA 1 comes up with a question
+Grad student 2 arrived
+TA 7 comes up with a question
+P wakes
+A group of TAs starts to be seen by P
+A group of TAs questions have been answered
+P goes to sleep
+TA 0 comes up with a question
+TA 2 comes up with a question
+TA 4 comes up with a question
+P wakes
+A group of TAs starts to be seen by P
+A group of TAs questions have been answered
+P goes to sleep
+TA 4 comes up with a question
+TA 6 comes up with a question
+TA 2 comes up with a question
+P wakes
+A group of TAs starts to be seen by P
+A group of TAs questions have been answered
+P goes to sleep
+TA 5 comes up with a question
+TA 2 comes up with a question
+TA 7 comes up with a question
+P wakes
+A group of TAs starts to be seen by P
+A group of TAs questions have been answered
+P goes to sleep
+TA 3 comes up with a question
+TA 8 comes up with a question
+TA 7 comes up with a question
+TA 1 comes up with a question
+P wakes
+A group of TAs starts to be seen by P
+A group of TAs questions have been answered
+P goes to sleep
+TA 6 comes up with a question
+TA 3 comes up with a question
+P wakes
+A group of TAs starts to be seen by P
+A group of TAs questions have been answered
+P goes to sleep
+Grad student 1 arrived
+P wakes
+P wakes their grad students
+All grad students have been woken
+
+With the SIGNAL_AND_WAIT semantic, we would be able to make the TAs wake a Professor and simply wait for Professor to finish the task of answering the question. The same can be applied for the GradStudents, where after arriving, they wait for the Professor to finish the task of printing "P wakes their grad students" to wake up and end the runnable task. 

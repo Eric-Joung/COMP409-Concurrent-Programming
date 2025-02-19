@@ -7,13 +7,13 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class q1 {
     // parameters
-    private static int s = 10;
-    private static int n = 5;
-    private static int t = 3;
-    private static int k = 50;
+    private static int s;
+    private static int n;
+    private static int t;
+    private static int k;
 
     // data structures
-    private static Cell[][] puzzleGrid = new Cell[n][n];
+    private static Cell[][] puzzleGrid;
     private static List<CharFrequency> charFrequencies = new ArrayList<>();
     private static HashSet<String> dictionary = new HashSet<>();
     private static final Random random = new Random(s);
@@ -29,6 +29,18 @@ public class q1 {
     };
 
     public static void main(String[] args) {
+        if (args.length != 4) {
+            System.out.println("Usage: q1.java s n t k");
+            return;
+        }
+
+        s = Integer.parseInt(args[0]);
+        n = Integer.parseInt(args[1]);
+        t = Integer.parseInt(args[2]);
+        k = Integer.parseInt(args[3]);
+
+        puzzleGrid = new Cell[n][n];
+
         // Try to read from files
         try {
             // Read frequency of letters

@@ -1,0 +1,34 @@
+Sample output with s = 10, n = 5, t = 3 and a large k: 
+IALDI
+SNPEG
+SGTTF
+TFOEA
+NEAEE
+0,0 ing lai ain lain nis anis ani 
+0,1 ass assn ain lain asg lai plans epa lan anis pal lang plan ani 
+0,2 lai plans lep lain lan tel pal lang plan 
+0,3 die dig fed def dei 
+0,4 die gie dig dei 
+1,0 ass assn asg plans nis anis 
+1,1 assn ing plans ain lain lan nis anis lang plan ani 
+1,2 pte ptt plans lep epa pal plan 
+1,3 die gie fed def lep epa dei gte tel 
+1,4 gie dig gte 
+2,0 ass assn nets plans stg 
+2,1 tgt ing asg stg lang 
+2,2 pte tgt ptt tel oft 
+2,3 pte toea ptt tea eat tae gte toe 
+2,4 fed def 
+3,0 tgt tea eft nets stg net ten 
+3,1 eft oft foe 
+3,2 toea toe oft foe 
+3,3 pte tea tae 
+3,4 toea tea eat tae 
+4,0 nets net ten 
+4,1 tea eft nets net ten foe 
+4,2 tea 
+4,3 toea eat toe 
+4,4 
+
+
+My program guarantees no deadlocks by attempting to acquire all the locks of the cells in the sequence in order. If it fails to get just one of the locks, it unacquires all locks and tries again. To do this, I use the Lock.tryLock() method which returns a Boolean value for if the lock acquisition was successful. 
