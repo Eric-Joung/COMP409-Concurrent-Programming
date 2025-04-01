@@ -1,0 +1,21 @@
+# Performance Data
+
+| Threads | Runtime (ms) |
+| ------- | ------------| 
+|    1    |     1015    |
+|    2    |     670     |    
+|    3    |     450     |
+|    4    |     322     |
+|    5    |     283     |
+
+
+Table 1. Runtime given number of threads for string of size 100000000
+
+# Discussion
+
+As we can see in table 1, a speedup can be noticed as the number of threads increase. The parallel schema
+involved creating a state mapping for each thread, where the final state is calculated for each possible
+starting state. Once all threads have finished computing, we sequentially go through each mapping with the
+final correct starting state for each segment, to end up with the final state. 
+
+The experiments were performed on an Intel i5-1235U 10 cores 12 logical processors machine. 

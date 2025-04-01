@@ -1,0 +1,40 @@
+# Performance Data
+
+| Threads | Runtime (ms) |
+| ------- | ------------| 
+|    1    |     1218    |
+|    2    |     941     |    
+|    4    |     565     |
+|    8    |     364     |
+
+Table 1. Runtime for a given number of threads with n = 10000 with p = 0.5
+
+| Threads | Runtime (ms) |
+| ------- | ------------| 
+|    1    |     1790    |
+|    2    |     487     |    
+|    4    |     316     |
+|    8    |     211     |
+
+Table 2. Runtime for a given number of threads with n = 10000 with p = 0.2
+
+| Threads | Runtime (ms) |
+| ------- | ------------| 
+|    1    |     1446    |
+|    2    |     389     |    
+|    4    |     314     |
+|    8    |     227     |
+
+Table 3. Runtime for a given number of threads with n = 10000 with p = 0.05
+
+# Discussion
+
+As we can see in tables 1, 2, and 3, increasing the number of threads decreases the runtime, meaning we 
+see a speedup. Parallelization is done both for the filling of the matrix and the CSR conversion. In the 
+case of the matrix filling, parallelization is done by performing a sort of round robin with the ids of
+the threads, where each thread as their own row to work with. Once complete with their row, they will move
+on the the next row, which is at the index +number of threads. This ensures all rows are covered. The CSR
+conversion also utilizes a similar round robin technique, where the rowptrs are computed first, and then 
+the cols and values are computed using the rowptrs to know which segment of the array to modify.
+
+The experiments were performed on an Intel i5-1235U 10 cores 12 logical processors machine. 
